@@ -17,7 +17,12 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000 and sign in with the demo account:
+
+- Email: `demo@kanban.dev`
+- Password: `kanban123`
+
+Sign in is a client-side demo only and does not provide real security.
 
 ## Test
 

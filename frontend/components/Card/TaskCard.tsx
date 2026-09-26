@@ -2,17 +2,19 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { CSSProperties } from "react";
 import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { Card } from "@/types/board";
 
 type TaskCardProps = {
   card: Card;
+  isLanded: boolean;
   onEdit: (cardId: string) => void;
   onDelete: (cardId: string) => void;
 };
 
 const cardActionClassName =
-  "rounded p-1 text-slate-400 focus-visible:outline-2 focus-visible:outline-primary";
+  "rounded p-1 text-slate-500 focus-visible:outline-2 focus-visible:outline-primary";
 
 const cardClassName =
   "group rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-colors";
@@ -30,7 +32,7 @@ function TaskCardText({ card }: { card: Card }) {
   );
 }
 
-export function TaskCard({ card, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ card, isLanded, onEdit, onDelete }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -46,10 +48,13 @@ export function TaskCard({ card, onEdit, onDelete }: TaskCardProps) {
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       {...listeners}
-      className={`${cardClassName} cursor-grab touch-none hover:border-slate-300 ${
-        isDragging ? "opacity-40" : ""
-      }`}
+      className={`${cardClassName} relative cursor-grab touch-none hover:border-slate-300 ${
+        isDragging
+          ? "border-dashed border-(--column-color)! bg-[color-mix(in_srgb,var(--column-color)_10%,white)] opacity-60"
+          : ""
+      } ${isLanded ? "animate-card-landed" : ""}`}
       data-testid="task-card"
+      data-landed={isLanded || undefined}
     >
       <div className="flex items-start gap-1.5">
         <button
@@ -65,7 +70,7 @@ export function TaskCard({ card, onEdit, onDelete }: TaskCardProps) {
         {/* Stop pointer events so clicking an action never starts a drag. */}
         <div
           onPointerDown={(event) => event.stopPropagation()}
-          className="-mr-1 flex shrink-0 gap-0.5 transition-opacity focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          className="-mr-1 flex shrink-0 gap-0.5 rounded-md bg-white transition-opacity focus-within:opacity-100 sm:absolute sm:top-2 sm:right-3 sm:mr-0 sm:opacity-0 sm:shadow-sm sm:ring-1 sm:ring-slate-200 sm:group-hover:opacity-100"
         >
           <button
             type="button"
@@ -89,9 +94,17 @@ export function TaskCard({ card, onEdit, onDelete }: TaskCardProps) {
   );
 }
 
-export function TaskCardPreview({ card }: { card: Card }) {
+type TaskCardPreviewProps = {
+  card: Card;
+  color: string;
+};
+
+export function TaskCardPreview({ card, color }: TaskCardPreviewProps) {
   return (
-    <div className={`${cardClassName} cursor-grabbing border-primary shadow-md`}>
+    <div
+      style={{ "--column-color": color } as CSSProperties}
+      className={`${cardClassName} cursor-grabbing border-(--column-color)! shadow-lg`}
+    >
       <div className="flex items-start gap-1.5">
         <GripVertical className="-ml-1 mt-0.5 size-4 shrink-0 text-slate-400" aria-hidden="true" />
         <TaskCardText card={card} />

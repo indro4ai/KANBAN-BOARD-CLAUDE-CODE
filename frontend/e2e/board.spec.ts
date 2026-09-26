@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { signIn } from "./helpers";
 
 function column(page: Page, name: string): Locator {
   return page.getByRole("region", { name, exact: true });
@@ -29,6 +30,7 @@ test.describe("Kanban board", () => {
     });
     page.on("pageerror", (error) => consoleErrors.push(error.message));
     await page.goto("/");
+    await signIn(page);
   });
 
   test.afterEach(() => {
@@ -163,6 +165,8 @@ test.describe("Kanban board", () => {
       "Collect customer feedback",
     ]);
     await expect(cardTitles(column(page, "Review"))).toContainText(["Draft Q4 roadmap"]);
+    await expect(source).toHaveAttribute("data-landed", "true");
+    await expect(source).not.toHaveAttribute("data-landed");
   });
 
   test("moves a card into an empty column", async ({ page, isMobile }) => {
@@ -184,6 +188,8 @@ test.describe("Kanban board", () => {
       "Collect customer feedback",
       "Research competitor onboarding",
     ]);
+    // Reordering within a column is not a status change, so no landing highlight.
+    await expect(backlog.locator("[data-landed]")).toHaveCount(0);
   });
 
   test("moves a card with the keyboard", async ({ page }) => {

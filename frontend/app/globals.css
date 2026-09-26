@@ -19,3 +19,36 @@ body {
 dialog::backdrop {
   background: rgb(3 33 71 / 0.4);
 }
+
+@keyframes card-landed-color {
+  from {
+    background-color: color-mix(in srgb, var(--column-color) 18%, white);
+    box-shadow: 0 0 0 2px var(--column-color);
+  }
+  to {
+    background-color: white;
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes card-landed-pop {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.animate-card-landed {
+  animation: card-landed-color 1s ease-out;
+}
+
+/* The colour flash still signals the move when users prefer reduced motion; only the scale is dropped. */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-card-landed {
+    animation:
+      card-landed-color 1s ease-out,
+      card-landed-pop 250ms ease-out;
+  }
+}

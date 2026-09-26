@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import {
   closestCorners,
   DndContext,
@@ -20,6 +20,7 @@ import { CardDialog } from "@/components/Card/CardDialog";
 import { TaskCardPreview } from "@/components/Card/TaskCard";
 import { KanbanColumn } from "@/components/Column/KanbanColumn";
 import { boardReducer, createCardId } from "@/lib/boardReducer";
+import { getColumnColor } from "@/lib/columnColors";
 import { initialBoard } from "@/lib/initialBoard";
 import type { BoardState } from "@/types/board";
 
@@ -31,6 +32,14 @@ export function KanbanBoard() {
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
   // Cards move between columns while hovering, so keep the pre-drag board to restore on cancel.
   const boardBeforeDrag = useRef<BoardState | null>(null);
+  const [landedCardId, setLandedCardId] = useState<string | null>(null);
+
+  // Clear the highlight once the landing animation has played so it can replay on the next move.
+  useEffect(() => {
+    if (!landedCardId) return;
+    const timeout = setTimeout(() => setLandedCardId(null), 1000);
+    return () => clearTimeout(timeout);
+  }, [landedCardId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -89,12 +98,16 @@ export function KanbanBoard() {
   }
 
   function handleDragEnd({ active, over }: DragEndEvent): void {
+    const startColumnId = boardBeforeDrag.current?.columns.find((column) =>
+      column.cardIds.includes(String(active.id))
+    )?.id;
     setActiveCardId(null);
     boardBeforeDrag.current = null;
     if (!over) return;
 
     const toColumnId = findColumnId(over.id);
     if (!toColumnId) return;
+    if (toColumnId !== startColumnId) setLandedCardId(String(active.id));
     const targetCardIds = board.columns.find((column) => column.id === toColumnId)!.cardIds;
     const overIndex = targetCardIds.indexOf(String(over.id));
     const toIndex = overIndex >= 0 ? overIndex : targetCardIds.length;
@@ -176,6 +189,7 @@ export function KanbanBoard() {
               column={column}
               cards={column.cardIds.map((cardId) => board.cards[cardId])}
               isDropTarget={column.id === dropTargetColumnId}
+              landedCardId={landedCardId}
               onRename={(columnId, title) => dispatch({ type: "renameColumn", columnId, title })}
               onAddCard={(columnId) => setOpenDialog({ mode: "add", columnId })}
               onEditCard={(cardId) => setOpenDialog({ mode: "edit", cardId })}
@@ -183,7 +197,14 @@ export function KanbanBoard() {
             />
           ))}
         </div>
-        <DragOverlay>{activeCard && <TaskCardPreview card={activeCard} />}</DragOverlay>
+        <DragOverlay>
+          {activeCard && (
+            <TaskCardPreview
+              card={activeCard}
+              color={getColumnColor(dropTargetColumnId ?? "")}
+            />
+          )}
+        </DragOverlay>
       </DndContext>
 
       {renderCardDialog()}
