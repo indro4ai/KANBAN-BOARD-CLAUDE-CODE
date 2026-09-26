@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-accent: #ecad0a;
+  --color-primary: #209dd7;
+  --color-secondary: #753991;
+  --color-secondary-dark: #5f2e76;
+  --color-navy: #032147;
+  --color-muted: #888888;
+  --color-surface: #f5f7fa;
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-navy);
+}
+
+dialog::backdrop {
+  background: rgb(3 33 71 / 0.4);
+}
