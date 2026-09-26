@@ -3,16 +3,28 @@
 import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { X } from "lucide-react";
 
-type AddCardDialogProps = {
-  columnTitle: string;
-  onAdd: (title: string, details: string) => void;
+type CardDialogProps = {
+  heading: string;
+  description: string;
+  submitLabel: string;
+  initialTitle?: string;
+  initialDetails?: string;
+  onSubmit: (title: string, details: string) => void;
   onClose: () => void;
 };
 
-export function AddCardDialog({ columnTitle, onAdd, onClose }: AddCardDialogProps) {
+export function CardDialog({
+  heading,
+  description,
+  submitLabel,
+  initialTitle = "",
+  initialDetails = "",
+  onSubmit,
+  onClose,
+}: CardDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [title, setTitle] = useState<string>("");
-  const [details, setDetails] = useState<string>("");
+  const [title, setTitle] = useState<string>(initialTitle);
+  const [details, setDetails] = useState<string>(initialDetails);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
@@ -27,7 +39,7 @@ export function AddCardDialog({ columnTitle, onAdd, onClose }: AddCardDialogProp
       setError("Please enter a card title.");
       return;
     }
-    onAdd(trimmedTitle, details.trim());
+    onSubmit(trimmedTitle, details.trim());
   }
 
   // A click whose target is the dialog element itself landed on the backdrop.
@@ -40,16 +52,16 @@ export function AddCardDialog({ columnTitle, onAdd, onClose }: AddCardDialogProp
       ref={dialogRef}
       onClose={onClose}
       onClick={handleBackdropClick}
-      aria-labelledby="add-card-heading"
+      aria-labelledby="card-dialog-heading"
       className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 text-navy shadow-xl"
     >
       <form onSubmit={handleSubmit} noValidate className="p-6">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 id="add-card-heading" className="text-lg font-semibold">
-              Add card
+            <h2 id="card-dialog-heading" className="text-lg font-semibold">
+              {heading}
             </h2>
-            <p className="mt-0.5 text-sm text-muted">To column: {columnTitle}</p>
+            <p className="mt-0.5 text-sm text-muted">{description}</p>
           </div>
           <button
             type="button"
@@ -110,7 +122,7 @@ export function AddCardDialog({ columnTitle, onAdd, onClose }: AddCardDialogProp
             type="submit"
             className="rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-white hover:bg-secondary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
           >
-            Add card
+            {submitLabel}
           </button>
         </div>
       </form>

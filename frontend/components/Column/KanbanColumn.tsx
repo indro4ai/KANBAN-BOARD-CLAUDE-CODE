@@ -13,6 +13,7 @@ type KanbanColumnProps = {
   isDropTarget: boolean;
   onRename: (columnId: string, title: string) => void;
   onAddCard: (columnId: string) => void;
+  onEditCard: (cardId: string) => void;
   onDeleteCard: (cardId: string) => void;
 };
 
@@ -22,6 +23,7 @@ export function KanbanColumn({
   isDropTarget,
   onRename,
   onAddCard,
+  onEditCard,
   onDeleteCard,
 }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id: column.id });
@@ -49,7 +51,7 @@ export function KanbanColumn({
       <SortableContext items={column.cardIds} strategy={verticalListSortingStrategy}>
         <ul ref={setNodeRef} className="flex min-h-24 flex-1 flex-col gap-2 px-3 pb-2">
           {cards.map((card) => (
-            <TaskCard key={card.id} card={card} onDelete={onDeleteCard} />
+            <TaskCard key={card.id} card={card} onEdit={onEditCard} onDelete={onDeleteCard} />
           ))}
           {cards.length === 0 && (
             <li className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-sm text-muted">

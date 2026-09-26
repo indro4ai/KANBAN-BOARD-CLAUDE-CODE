@@ -107,6 +107,38 @@ test.describe("Kanban board", () => {
     await expect(page.getByText("Discarded")).toHaveCount(0);
   });
 
+  test("edits the title and details of a card", async ({ page }) => {
+    const todo = column(page, "To Do");
+    await todo.getByRole("button", { name: "Edit card: Design settings page" }).click();
+    const dialog = page.getByRole("dialog", { name: "Edit card" });
+    await expect(dialog.getByLabel("Title")).toHaveValue("Design settings page");
+    await expect(dialog.getByLabel("Details")).toHaveValue(
+      "Create wireframes for account and notification settings."
+    );
+
+    await dialog.getByLabel("Title").fill("Design account page");
+    await dialog.getByLabel("Details").fill("Include profile photo upload.");
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(cardTitles(todo)).toHaveText(["Design account page", "Set up error monitoring"]);
+    await expect(todo.getByText("Include profile photo upload.")).toBeVisible();
+    await expect(page.getByText("Design settings page")).toHaveCount(0);
+  });
+
+  test("rejects an empty title when editing and keeps the original on cancel", async ({ page }) => {
+    const done = column(page, "Done");
+    await done.getByRole("button", { name: "Edit card: Launch marketing site" }).click();
+    const dialog = page.getByRole("dialog", { name: "Edit card" });
+    await dialog.getByLabel("Title").fill("  ");
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+    await expect(dialog.getByRole("alert")).toHaveText("Please enter a card title.");
+
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(cardTitles(done).first()).toHaveText("Launch marketing site");
+  });
+
   test("deletes a card", async ({ page }) => {
     const todo = column(page, "To Do");
     await todo.getByRole("button", { name: "Delete card: Design settings page" }).click();

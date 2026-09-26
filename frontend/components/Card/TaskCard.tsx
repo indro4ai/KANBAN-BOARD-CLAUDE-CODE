@@ -2,13 +2,17 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import type { Card } from "@/types/board";
 
 type TaskCardProps = {
   card: Card;
+  onEdit: (cardId: string) => void;
   onDelete: (cardId: string) => void;
 };
+
+const cardActionClassName =
+  "rounded p-1 text-slate-400 focus-visible:outline-2 focus-visible:outline-primary";
 
 const cardClassName =
   "group rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-colors";
@@ -26,7 +30,7 @@ function TaskCardText({ card }: { card: Card }) {
   );
 }
 
-export function TaskCard({ card, onDelete }: TaskCardProps) {
+export function TaskCard({ card, onEdit, onDelete }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -58,15 +62,28 @@ export function TaskCard({ card, onDelete }: TaskCardProps) {
           <GripVertical className="size-4" aria-hidden="true" />
         </button>
         <TaskCardText card={card} />
-        <button
-          type="button"
-          onClick={() => onDelete(card.id)}
+        {/* Stop pointer events so clicking an action never starts a drag. */}
+        <div
           onPointerDown={(event) => event.stopPropagation()}
-          aria-label={`Delete card: ${card.title}`}
-          className="-mr-1 rounded p-1 text-slate-400 opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-primary sm:opacity-0 sm:group-hover:opacity-100"
+          className="-mr-1 flex shrink-0 gap-0.5 transition-opacity focus-within:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
         >
-          <Trash2 className="size-4" aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            onClick={() => onEdit(card.id)}
+            aria-label={`Edit card: ${card.title}`}
+            className={`${cardActionClassName} hover:bg-slate-100 hover:text-navy`}
+          >
+            <Pencil className="size-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(card.id)}
+            aria-label={`Delete card: ${card.title}`}
+            className={`${cardActionClassName} hover:bg-red-50 hover:text-red-600`}
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+          </button>
+        </div>
       </div>
     </li>
   );

@@ -24,6 +24,31 @@ describe("boardReducer", () => {
     expect(next.cards.new).toEqual(card);
   });
 
+  it("updates the title and details of a card", () => {
+    const next = boardReducer(initialBoard, {
+      type: "updateCard",
+      cardId: "card-4",
+      title: "Design account page",
+      details: "Updated details",
+    });
+    expect(next.cards["card-4"]).toEqual({
+      id: "card-4",
+      title: "Design account page",
+      details: "Updated details",
+    });
+    expect(next.columns).toBe(initialBoard.columns);
+  });
+
+  it("ignores updates to an unknown card", () => {
+    const next = boardReducer(initialBoard, {
+      type: "updateCard",
+      cardId: "missing",
+      title: "Title",
+      details: "",
+    });
+    expect(next).toBe(initialBoard);
+  });
+
   it("deletes a card from its column and the card map", () => {
     const next = boardReducer(initialBoard, { type: "deleteCard", cardId: "card-4" });
     expect(cardIdsOf(next, "todo")).toEqual(["card-5"]);

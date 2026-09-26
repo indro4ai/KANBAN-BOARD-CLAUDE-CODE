@@ -16,17 +16,19 @@ import {
   type UniqueIdentifier,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { AddCardDialog } from "@/components/Card/AddCardDialog";
+import { CardDialog } from "@/components/Card/CardDialog";
 import { TaskCardPreview } from "@/components/Card/TaskCard";
 import { KanbanColumn } from "@/components/Column/KanbanColumn";
 import { boardReducer, createCardId } from "@/lib/boardReducer";
 import { initialBoard } from "@/lib/initialBoard";
 import type { BoardState } from "@/types/board";
 
+type OpenDialog = { mode: "add"; columnId: string } | { mode: "edit"; cardId: string } | null;
+
 export function KanbanBoard() {
   const [board, dispatch] = useReducer(boardReducer, initialBoard);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
-  const [addCardColumnId, setAddCardColumnId] = useState<string | null>(null);
+  const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
   // Cards move between columns while hovering, so keep the pre-drag board to restore on cancel.
   const boardBeforeDrag = useRef<BoardState | null>(null);
 
@@ -107,19 +109,53 @@ export function KanbanBoard() {
     setActiveCardId(null);
   }
 
-  function addCard(title: string, details: string): void {
-    if (!addCardColumnId) return;
-    dispatch({
-      type: "addCard",
-      columnId: addCardColumnId,
-      card: { id: createCardId(), title, details },
-    });
-    setAddCardColumnId(null);
+  function saveCard(title: string, details: string): void {
+    if (openDialog?.mode === "add") {
+      dispatch({
+        type: "addCard",
+        columnId: openDialog.columnId,
+        card: { id: createCardId(), title, details },
+      });
+    } else if (openDialog?.mode === "edit") {
+      dispatch({ type: "updateCard", cardId: openDialog.cardId, title, details });
+    }
+    setOpenDialog(null);
+  }
+
+  function renderCardDialog() {
+    if (openDialog?.mode === "add") {
+      const column = board.columns.find((candidate) => candidate.id === openDialog.columnId);
+      if (!column) return null;
+      return (
+        <CardDialog
+          heading="Add card"
+          description={`To column: ${column.title}`}
+          submitLabel="Add card"
+          onSubmit={saveCard}
+          onClose={() => setOpenDialog(null)}
+        />
+      );
+    }
+    if (openDialog?.mode === "edit") {
+      const card = board.cards[openDialog.cardId];
+      if (!card) return null;
+      return (
+        <CardDialog
+          heading="Edit card"
+          description={`In column: ${columnTitle(card.id)}`}
+          submitLabel="Save changes"
+          initialTitle={card.title}
+          initialDetails={card.details}
+          onSubmit={saveCard}
+          onClose={() => setOpenDialog(null)}
+        />
+      );
+    }
+    return null;
   }
 
   const activeCard = activeCardId ? board.cards[activeCardId] : null;
   const dropTargetColumnId = activeCardId ? findColumnId(activeCardId) : undefined;
-  const addCardColumn = board.columns.find((column) => column.id === addCardColumnId);
 
   return (
     <>
@@ -141,7 +177,8 @@ export function KanbanBoard() {
               cards={column.cardIds.map((cardId) => board.cards[cardId])}
               isDropTarget={column.id === dropTargetColumnId}
               onRename={(columnId, title) => dispatch({ type: "renameColumn", columnId, title })}
-              onAddCard={setAddCardColumnId}
+              onAddCard={(columnId) => setOpenDialog({ mode: "add", columnId })}
+              onEditCard={(cardId) => setOpenDialog({ mode: "edit", cardId })}
               onDeleteCard={(cardId) => dispatch({ type: "deleteCard", cardId })}
             />
           ))}
@@ -149,13 +186,7 @@ export function KanbanBoard() {
         <DragOverlay>{activeCard && <TaskCardPreview card={activeCard} />}</DragOverlay>
       </DndContext>
 
-      {addCardColumn && (
-        <AddCardDialog
-          columnTitle={addCardColumn.title}
-          onAdd={addCard}
-          onClose={() => setAddCardColumnId(null)}
-        />
-      )}
+      {renderCardDialog()}
     </>
   );
 }
